@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,14 +40,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, OnMapReadyCallback {
 
     private final String DEBUG_TAG = MainActivity.class.getSimpleName();
 
-    private final int MY_LOCATION_REQUEST_CODE = 0;
     private final int REQUEST_CODE = 101;
-    private final int REQUEST_CODE_2 = 102;
 
     // Views
     private Button checkRecordsBtn, getLocationUpdateBtn, removeLocationUpdateBtn;
@@ -164,13 +164,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (!checkPermission()) {
             ActivityCompat.requestPermissions(
                     this,
-                    new String[] {Manifest.permission.ACCESS_FINE_LOCATION},
+                    new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                     REQUEST_CODE);
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[] {Manifest.permission.ACCESS_COARSE_LOCATION},
-                    REQUEST_CODE_2);
+            return;
         }
+        initLocationComp();
     }
 
     private boolean checkPermission() {
@@ -185,11 +183,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE || requestCode == REQUEST_CODE_2) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        Log.d(DEBUG_TAG, "requestCode: " + requestCode);
+        Log.d(DEBUG_TAG, "permissions: " + Arrays.toString(permissions));
+        Log.d(DEBUG_TAG, "grantResults: " + Arrays.toString(grantResults));
+         if (requestCode == REQUEST_CODE) {
+             // All Permissions Granted
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 initLocationComp();
             }  else {
-                Toast.makeText(MainActivity.this, "Permission not granted", Toast.LENGTH_SHORT).show();
+                Snackbar
+                        .make(findViewById(android.R.id.content), "Location Permission was not granted",
+                                Snackbar.LENGTH_INDEFINITE)
+                        .setAction("View", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                askPermission();
+                            }
+                        })
+                        .show();
             }
         }
     }
@@ -205,21 +218,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onMapReady(@NonNull GoogleMap googleMap) {
         this.googleMap = googleMap;
         if (googleMap != null) {
-            // Zoom in to Sg
-            LatLng sg = new LatLng(1.3558701658116, 103.86277464840944);
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sg, 11));
             // Enable Features
             UiSettings uiSettings = googleMap.getUiSettings();
             uiSettings.setCompassEnabled(true);
             uiSettings.setZoomControlsEnabled(true);
             uiSettings.setZoomGesturesEnabled(true);
-            uiSettings.setMyLocationButtonEnabled(true);
-
-            if (checkPermission()) {
-                googleMap.setMyLocationEnabled(true);
-            } else {
-                askPermission();
-            }
         }
     }
 
@@ -241,12 +244,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // --- File Record ---
     private void saveToDir() {
-        if (lastLocation != null) {
-            // Create Directory if it doesnt exist
-            createDir();
-            // Write Location Record
-            writeRecord();
-        }
+        createDir();
+        writeRecord();
     }
 
     private void createDir() {
