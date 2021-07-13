@@ -4,7 +4,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -27,6 +30,7 @@ public class RecordsActivity extends AppCompatActivity {
 
     // Views
     private TextView recordsTV;
+    private Button refereshBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,13 @@ public class RecordsActivity extends AppCompatActivity {
 
     private void initViews() {
         recordsTV = findViewById(R.id.number_of_records_text_view);
+        refereshBtn = findViewById(R.id.refresh_button);
+        refereshBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                read();
+            }
+        });
     }
 
     private void initLVComp() {
@@ -84,4 +95,5 @@ public class RecordsActivity extends AppCompatActivity {
             }
         }
     }
+
 }
